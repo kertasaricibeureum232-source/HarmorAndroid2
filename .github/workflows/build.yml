@@ -4,45 +4,43 @@ name: Build Harmor Android APK
 on:
   workflow_dispatch:
   push:
-    branches: [main]
+    branches:
+      - main
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout project
+      - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Install Java
+      - name: Setup Java 17
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '17'
 
-      - name: Install Gradle
-        uses: gradle/actions/setup-gradle@v6
-        with:
-          gradle-version: '8.9'
-
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
 
-      - name: Install SDK packages
+      - name: Install Android SDK packages
         run: |
-          yes | sdkmanager --licenses || true
-          sdkmanager "platforms;android-35" "build-tools;35.0.0"
+          sdkmanager --install "platform-tools" "platforms;android-35" "build-tools;35.0.0"
 
-      - name: Extract project ZIP
+      - name: Extract Android project
         run: |
-          mkdir source
+          mkdir -p source
           unzip -o HarmorAndroid_Prototype_Project.zip -d source
 
       - name: Build APK
-        run: gradle -p source assembleDebug
+        run: |
+          cd source
+          gradle assembleDebug
 
-      - name: Save APK
+      - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: HarmorAndroid-APK
           path: source/app/build/outputs/apk/debug/*.apk
+          if-no-files-found: error
